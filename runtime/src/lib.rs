@@ -56,17 +56,25 @@ pub type Nonce = u64;
 /// Balance type for the node.
 pub type Balance = u128;
 
-/// Used for the module template in `./template.rs`
-mod template;
+pub mod currency {
+	use super::Balance;
+
+	pub const MILLICENTS: Balance = 1_000_000_000;
+	pub const CENTS: Balance = 1_000 * MILLICENTS;
+	pub const DOLLARS: Balance = 100 * CENTS;
+}
+
+const MILLICENTS: u128 = 1_000_000_000;
+const CENTS: u128 = 1_000 * MILLICENTS;    // assume this is worth about a cent.
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core datastructures.
 pub mod opaque {
-	use super::*;
-
 	pub use sr_primitives::OpaqueExtrinsic as UncheckedExtrinsic;
+
+	use super::*;
 
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
@@ -85,8 +93,8 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("node-template"),
-	impl_name: create_runtime_str!("node-template"),
+	spec_name: create_runtime_str!("node"),
+	impl_name: create_runtime_str!("test-node"),
 	authoring_version: 3,
 	spec_version: 4,
 	impl_version: 4,
@@ -160,6 +168,40 @@ impl indices::Trait for Runtime {
 }
 
 parameter_types! {
+	pub const ContractTransferFee: Balance = 1 * CENTS;
+	pub const ContractCreationFee: Balance = 1 * CENTS;
+	pub const ContractTransactionBaseFee: Balance = 1 * CENTS;
+	pub const ContractTransactionByteFee: Balance = 10 * MILLICENTS;
+	pub const ContractFee: Balance = 1 * CENTS;
+}
+
+impl contracts::Trait for Runtime {
+	type Currency = Balances;
+	type Call = Call;
+	type Event = Event;
+	type DetermineContractAddress = contracts::SimpleAddressDeterminator<Runtime>;
+	type ComputeDispatchFee = contracts::DefaultDispatchFeeComputor<Runtime>;
+	type TrieIdGenerator = contracts::TrieIdFromParentCounter<Runtime>;
+	type GasPayment = ();
+	type SignedClaimHandicap = contracts::DefaultSignedClaimHandicap;
+	type TombstoneDeposit = contracts::DefaultTombstoneDeposit;
+	type StorageSizeOffset = contracts::DefaultStorageSizeOffset;
+	type RentByteFee = contracts::DefaultRentByteFee;
+	type RentDepositOffset = contracts::DefaultRentDepositOffset;
+	type SurchargeReward = contracts::DefaultSurchargeReward;
+	type TransferFee = ContractTransferFee;
+	type CreationFee = ContractCreationFee;
+	type TransactionBaseFee = ContractTransactionBaseFee;
+	type TransactionByteFee = ContractTransactionByteFee;
+	type ContractFee = ContractFee;
+	type CallBaseFee = contracts::DefaultCallBaseFee;
+	type CreateBaseFee = contracts::DefaultCreateBaseFee;
+	type MaxDepth = contracts::DefaultMaxDepth;
+	type MaxValueSize = contracts::DefaultMaxValueSize;
+	type BlockGasLimit = contracts::DefaultBlockGasLimit;
+}
+
+parameter_types! {
 	pub const MinimumPeriod: u64 = 5000;
 }
 
@@ -182,7 +224,7 @@ impl balances::Trait for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// What to do if an account's free balance gets zeroed.
-	type OnFreeBalanceZero = ();
+	type OnFreeBalanceZero = (Contract);
 	/// What to do if a new account is created.
 	type OnNewAccount = Indices;
 	/// The ubiquitous event type.
@@ -205,10 +247,6 @@ impl sudo::Trait for Runtime {
 	type Proposal = Call;
 }
 
-/// Used for the module template in `./template.rs`
-impl template::Trait for Runtime {
-	type Event = Event;
-}
 
 construct_runtime!(
 	pub enum Runtime where
@@ -222,8 +260,7 @@ construct_runtime!(
 		Indices: indices::{default, Config<T>},
 		Balances: balances,
 		Sudo: sudo,
-		// Used for the module template in `./template.rs`
-		TemplateModule: template::{Module, Call, Storage, Event<T>},
+		Contract: contracts,
 	}
 );
 

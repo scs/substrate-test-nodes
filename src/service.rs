@@ -5,7 +5,7 @@
 use std::sync::Arc;
 use log::info;
 use transaction_pool::{self, txpool::{Pool as TransactionPool}};
-use substrate_test_node_runtime::{self, GenesisConfig, opaque::Block, RuntimeApi, WASM_BINARY};
+use test_node_runtime::{self, GenesisConfig, opaque::Block, RuntimeApi, WASM_BINARY};
 use substrate_service::{
 	FactoryFullConfiguration, LightComponents, FullComponents, FullBackend,
 	FullClient, LightClient, LightBackend, FullExecutor, LightExecutor,
@@ -25,8 +25,8 @@ pub use substrate_executor::NativeExecutor;
 // Our native executor instance.
 native_executor_instance!(
 	pub Executor,
-	substrate_test_node_runtime::api::dispatch,
-	substrate_test_node_runtime::native_version,
+	test_node_runtime::api::dispatch,
+	test_node_runtime::native_version,
 	WASM_BINARY
 );
 

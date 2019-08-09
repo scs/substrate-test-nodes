@@ -1,9 +1,11 @@
 use primitives::{sr25519, Pair};
-use substrate_test_node_runtime::{
+use test_node_runtime::{
 	AccountId, GenesisConfig, AuraConfig, BalancesConfig,
-	SudoConfig, IndicesConfig, SystemConfig, WASM_BINARY, AuraId
+	SudoConfig, IndicesConfig, SystemConfig, WASM_BINARY, AuraId, ContractConfig,
+	currency::*
 };
 use aura_primitives::sr25519::AuthorityPair as AuraPair;
+use contracts;
 use substrate_service;
 
 // Note this is the URL for the telemetry server
@@ -104,6 +106,13 @@ fn testnet_genesis(initial_authorities: Vec<AuraId>, endowed_accounts: Vec<Accou
 		balances: Some(BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
 			vesting: vec![],
+		}),
+		contracts: Some(ContractConfig {
+			current_schedule: contracts::Schedule {
+				enable_println: true, // this should only be enabled on development chains
+				..Default::default()
+			},
+			gas_price: 1 * MILLICENTS,
 		}),
 		sudo: Some(SudoConfig {
 			key: root_key,
