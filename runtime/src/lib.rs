@@ -48,10 +48,10 @@ pub type AccountSignature = sr25519::Signature;
 pub type Hash = primitives::H256;
 
 /// Index of a block number in the chain.
-pub type BlockNumber = u64;
+pub type BlockNumber = u32;
 
 /// Index of an account's extrinsic in the chain.
-pub type Nonce = u64;
+pub type Nonce = u32;
 
 /// Balance type for the node.
 pub type Balance = u128;
@@ -72,9 +72,9 @@ const CENTS: u128 = 1_000 * MILLICENTS;    // assume this is worth about a cent.
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core datastructures.
 pub mod opaque {
-	pub use sr_primitives::OpaqueExtrinsic as UncheckedExtrinsic;
-
 	use super::*;
+
+	pub use sr_primitives::OpaqueExtrinsic as UncheckedExtrinsic;
 
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
