@@ -152,6 +152,7 @@ std = [
     "safe-mix/std",
     "consensus-aura/std",
     "offchain-primitives/std",
+    "substrate-session/std",
 ]
 no_std = [
     "contracts/core",
