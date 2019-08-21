@@ -1,3 +1,4 @@
+use codec::{Decode, Encode};
 /// A runtime module template with necessary imports
 
 /// Feel free to remove or edit this file as needed.
@@ -8,61 +9,108 @@
 /// For more guidance on Substrate modules, see the example module
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
 
-use support::{decl_module, decl_storage, decl_event, StorageValue, dispatch::Result};
+use support::{decl_event, decl_module, decl_storage, dispatch::Result, ensure, StorageMap, StorageValue};
 use system::ensure_signed;
 
-/// The module's configuration trait.
-pub trait Trait: system::Trait {
-	// TODO: Add other types and constants required configure this module.
+#[derive(Encode, Decode, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
+pub struct Kitty<Hash, Balance> {
+	id: Hash,
+	price: Balance,
+}
 
+/// The module's configuration trait.
+pub trait Trait: balances::Trait {
 	/// The overarching event type.
 	type Event: From<Event<Self>> + Into<<Self as system::Trait>::Event>;
 }
 
 // This module's storage items.
 decl_storage! {
-	trait Store for Module<T: Trait> as TemplateModule {
-		// Just a dummy storage item.
-		// Here we are declaring a StorageValue, `Something` as a Option<u32>
-		// `get(something)` is the default getter which returns either the stored `u32` or `None` if nothing stored
-		Something get(something): Option<u32>;
-	}
+	trait Store for Module<T: Trait> as Kitty
+	{
+        pub Kitties get(kitty): map u64 => Kitty<T::Hash, T::Balance>;
+    	pub KittyCount get(kitty_count): u64;
+    	pub KittyIndex: map T::AccountId => u64;
+    }
 }
 
 // The module's dispatchable functions.
 decl_module! {
-	/// The module declaration.
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-		// Initializing events
-		// this is needed only if you are using events in your module
 		fn deposit_event<T>() = default;
 
-		// Just a dummy entry point.
-		// function that can be called by the external world as an extrinsics call
-		// takes a parameter of the type `AccountId`, stores it and emits an event
-		pub fn do_something(origin, something: u32) -> Result {
-			// TODO: You only need this if you want to check it was signed.
-			let who = ensure_signed(origin)?;
+        fn create_kitty(origin, price: T::Balance) -> Result {
+            let sender = ensure_signed(origin)?;
 
-			// TODO: Code to execute when something calls this.
-			// For example: the following line stores the passed in u32 in the storage
-			Something::put(something);
+			if !<KittyIndex<T>>::exists(&sender) {
+				Self::_create_kitty(&sender, price)?;
 
-			// here we are raising the Something event
-			Self::deposit_event(RawEvent::SomethingStored(something, who));
-			Ok(())
-		}
-	}
+				// let the sender know where his kitty is stored
+				let key = <KittyIndex<T>>::get(&sender);
+				Self::deposit_event(RawEvent::StoredKitty(sender, key));
+			} else {
+				Self::_update_kitty(&sender, price)?;
+
+				// let the sender know where his kitty is stored
+				let key = <KittyIndex<T>>::get(&sender);
+				Self::deposit_event(RawEvent::UpdatedKitty(sender, key));
+			}
+            Ok(())
+        }
+
+        fn update_kitty(origin, price: T::Balance) {
+        	let sender = ensure_signed(origin)?;
+        	ensure!(<KittyIndex<T>>::exists(&sender), "Cannot update nonexistent Kitty");
+        	Self::_update_kitty(&sender, price)?;
+
+			// let the sender know where his kitty is stored
+			let key = <KittyIndex<T>>::get(&sender);
+			Self::deposit_event(RawEvent::UpdatedKitty(sender, key))
+        }
+    }
 }
 
 decl_event!(
 	pub enum Event<T> where AccountId = <T as system::Trait>::AccountId {
-		// Just a dummy event.
-		// Event `Something` is declared with a parameter of the type `u32` and `AccountId`
-		// To emit this event, we call the deposit funtion, from our runtime funtions
-		SomethingStored(u32, AccountId),
+		StoredKitty(AccountId, u64),
+		UpdatedKitty(AccountId, u64),
 	}
 );
+
+impl<T: Trait> Module<T> {
+	fn _create_kitty(sender: &T::AccountId, price: T::Balance) -> Result {
+		if <KittyIndex<T>>::exists(sender) {
+			return Self::_update_kitty(sender, price);
+		}
+
+		let kitty_count = Self::kitty_count();
+		let new_kitty_count = kitty_count.checked_add(1).
+			ok_or("[KittyModule]: Overflow adding new kitty")?;
+
+		let random_seed = <system::Module<T>>::random_seed();
+
+		let new_kitty = Kitty {
+			id: random_seed,
+			price,
+		};
+
+		<Kitties<T>>::insert(kitty_count, &new_kitty);
+		<KittyCount>::put(new_kitty_count);
+		<KittyIndex<T>>::insert(sender, kitty_count);
+
+		Ok(())
+	}
+
+	fn _update_kitty(sender: &T::AccountId, price: T::Balance) -> Result {
+		let key = <KittyIndex<T>>::get(sender);
+		let mut kitty = <Kitties<T>>::get(key);
+		kitty.price = price;
+		<Kitties<T>>::insert(key, kitty);
+
+		Ok(())
+	}
+}
 
 /// tests for this module
 #[cfg(test)]

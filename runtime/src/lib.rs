@@ -67,6 +67,8 @@ pub mod currency {
 const MILLICENTS: u128 = 1_000_000_000;
 const CENTS: u128 = 1_000 * MILLICENTS;    // assume this is worth about a cent.
 
+mod kitty;
+
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
@@ -247,6 +249,10 @@ impl sudo::Trait for Runtime {
 	type Proposal = Call;
 }
 
+/// Used for the module template in `./kitty.rs`
+impl kitty::Trait for Runtime {
+	type Event = Event;
+}
 
 construct_runtime!(
 	pub enum Runtime where
@@ -261,6 +267,7 @@ construct_runtime!(
 		Balances: balances,
 		Sudo: sudo,
 		Contract: contracts,
+		KittyModule: kitty::{Module, Call, Storage, Event<T>},
 	}
 );
 
