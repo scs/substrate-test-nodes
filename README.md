@@ -9,9 +9,9 @@ The following modifications have been added to the standard node-template:
 ## build from source
 Given you have all [substrate prerequisites](https://substrate.dev/docs/en/getting-started/installing-substrate), you can just do
 ```
-cargo build
+cargo build --release
 ```
 then run with
 ```
-
+./target/release/substrate-test-node --dev
 ```
