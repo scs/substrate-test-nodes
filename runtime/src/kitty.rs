@@ -38,7 +38,7 @@ decl_storage! {
 // The module's dispatchable functions.
 decl_module! {
 	pub struct Module<T: Trait> for enum Call where origin: T::Origin {
-		fn deposit_event<T>() = default;
+		fn deposit_event() = default;
 
         fn create_kitty(origin, price: T::Balance) -> Result {
             let sender = ensure_signed(origin)?;
