@@ -133,7 +133,7 @@ fn testnet_genesis(initial_authorities: Vec<(AccountId, AccountId, GrandpaId, Ba
 		sudo: Some(SudoConfig {
 			key: root_key,
 		}),
-				babe: Some(BabeConfig {
+		babe: Some(BabeConfig {
 			authorities: initial_authorities.iter().map(|x| (x.3.clone(), 1)).collect(),
 		}),
 		grandpa: Some(GrandpaConfig {
