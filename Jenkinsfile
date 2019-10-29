@@ -14,7 +14,7 @@ pipeline {
         sh './ci/install_rust.sh'
       }
     }
-    stage('Build Test-Node') {
+    stage('Build') {
       steps {
         // sh 'cargo build --release --examples'
         sh 'ls -la > directories.txt'
