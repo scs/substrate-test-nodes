@@ -16,12 +16,12 @@ pipeline {
     }
     stage('Build') {
       steps {
-        sh 'cargo build --release --examples'
+        sh 'cargo build --release'
       }
     }
     stage('Archive artifact') {
       steps {
-        archiveArtifacts artifacts: 'directories.txt', fingerprint: true
+        archiveArtifacts artifacts: 'target/release/substrate-test-node', fingerprint: true
       }
     }
   }
