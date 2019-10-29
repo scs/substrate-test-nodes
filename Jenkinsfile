@@ -16,8 +16,7 @@ pipeline {
     }
     stage('Build') {
       steps {
-        // sh 'cargo build --release --examples'
-        sh 'ls -la > directories.txt'
+        sh 'cargo build --release --examples'
       }
     }
     stage('Archive artifact') {
