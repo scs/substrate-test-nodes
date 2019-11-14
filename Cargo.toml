@@ -1,3 +1,7 @@
+# Changes by SCS:
+#  - renamed node-template -> substrate-test-node
+#  - renamed runtime -> test-node-runtime
+
 [package]
 name = "substrate-test-node"
 version = "2.0.0"

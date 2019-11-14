@@ -60,7 +60,8 @@ pub type Hash = primitives::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
-
+// Added by SCS. This is how they define the Currencies used
+// by the contract module used in the substrate node
 pub mod currency {
 	use super::Balance;
 
@@ -186,6 +187,8 @@ impl indices::Trait for Runtime {
 	type Event = Event;
 }
 
+// Added by SCS. In case the contract module is changed. One can look up
+// the necessary changes in the substrate node.
 parameter_types! {
 	pub const ContractTransferFee: Balance = 1 * CENTS;
 	pub const ContractCreationFee: Balance = 1 * CENTS;
@@ -198,6 +201,8 @@ parameter_types! {
 	pub const SurchargeReward: Balance = 150 * DOLLARS;
 }
 
+// Added by SCS. In case the contract module is changed. One can look up
+// the necessary changes in the substrate node.
 impl contracts::Trait for Runtime {
 	type Currency = Balances;
 	type Time = Timestamp;
@@ -248,7 +253,7 @@ impl balances::Trait for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// What to do if an account's free balance gets zeroed.
-	type OnFreeBalanceZero = (Contract);
+	type OnFreeBalanceZero = (Contract);  // Contract argument added by SCS
 	/// What to do if a new account is created.
 	type OnNewAccount = Indices;
 	/// The ubiquitous event type.

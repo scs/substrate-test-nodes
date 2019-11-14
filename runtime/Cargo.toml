@@ -4,8 +4,6 @@ version = "2.0.0"
 authors = ["Supercomputing Systems AG <info@scs.ch>"]
 edition = "2018"
 
-
-
 [dependencies.serde]
 features = ["derive"]
 optional = true
@@ -158,6 +156,7 @@ git = "https://github.com/paritytech/substrate"
 package = "substrate-inherents"
 rev = "6ae3b6c4ddc03d4cdb10bd1d417b95d20f4c1b6e"
 
+# added by SCS
 [dependencies.contracts]
 default-features = false
 git = "https://github.com/paritytech/substrate"
@@ -198,8 +197,5 @@ std = [
 	"block-builder-api/std",
 	"tx-pool-api/std",
 	"inherents/std",
-    "contracts/std",
+    "contracts/std",  # added by SCS
 ]
-#no_std = [
-#    "contracts/core",
-#]
