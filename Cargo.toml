@@ -1,3 +1,8 @@
+# Changes by SCS:
+# - renamed 'node-template' to 'substrate-test-node'
+# - renamed 'runtime' to 'test-node-runtime'
+# - add 'contracts'
+
 [package]
 name = "substrate-test-node"
 version = "2.0.0"

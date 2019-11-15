@@ -1,5 +1,6 @@
 // Changes by SCS:
-// - renamed: runtime -> test_node_runtime
+// - renamed: runtime ->
+
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
 use std::sync::Arc;
