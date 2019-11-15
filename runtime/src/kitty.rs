@@ -1,4 +1,3 @@
-use codec::{Decode, Encode};
 /// A runtime module template with necessary imports
 
 /// Feel free to remove or edit this file as needed.
@@ -11,6 +10,7 @@ use codec::{Decode, Encode};
 
 use support::{decl_event, decl_module, decl_storage, dispatch::Result, ensure, StorageValue, traits::Randomness};
 use system::ensure_signed;
+use codec::{Decode, Encode};
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
