@@ -1,13 +1,23 @@
+// Changes by SCS:
+// - rename 'runtime' to 'test_node_runtime'
+// - use 'ContractConfig' and 'currency::*' from 'test_node_runtime'
+// - use 'contracts'
+// - add 'contracts' to 'GenesisConfig'
+
 use primitives::{Pair, Public, sr25519};
 use test_node_runtime::{
 	AccountId, AuraConfig, BalancesConfig, GenesisConfig, GrandpaConfig,
 	SudoConfig, IndicesConfig, SystemConfig, WASM_BINARY,
-	ContractConfig, currency::*, // added by SCS
+	// --- start added by SCS -------------------------------------------------
+	ContractConfig, currency::*,
+	// --- end added by SCS ---------------------------------------------------
 	Signature
 };
 use aura_primitives::sr25519::{AuthorityId as AuraId};
 use grandpa_primitives::{AuthorityId as GrandpaId};
-use contracts; // added by SCS
+// --- start added by SCS -----------------------------------------------------
+use contracts;
+// --- end added by SCS -------------------------------------------------------
 use substrate_service;
 use sr_primitives::traits::{Verify, IdentifyAccount};
 
@@ -133,7 +143,8 @@ fn testnet_genesis(initial_authorities: Vec<(AuraId, GrandpaId)>,
 			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
 			vesting: vec![],
 		}),
-		// Added by SCS. Look up in the substrate node on how to initialize this.
+		// --- start added by SCS ---------------------------------------------
+		// Look up in the substrate node on how to initialize this.
 		contracts: Some(ContractConfig {
 			current_schedule: contracts::Schedule {
 				enable_println: true, // this should only be enabled on development chains
@@ -141,6 +152,7 @@ fn testnet_genesis(initial_authorities: Vec<(AuraId, GrandpaId)>,
 			},
 			gas_price: 1 * MILLICENTS,
 		}),
+		// --- end added by SCS -----------------------------------------------
 		sudo: Some(SudoConfig {
 			key: root_key,
 		}),

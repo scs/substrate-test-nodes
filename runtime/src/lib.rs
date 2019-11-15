@@ -1,3 +1,11 @@
+// Changes by SCS:
+// - add module currency
+// - use kitty module
+// - change name from 'node-template' to 'node' (spec_name) and 'test-node' (impl_name)
+// - add parameter_types for contracts
+// - add contracts::Trait for Runtime
+// - add Contracts to FreeBalanceZero
+
 //! The Substrate Node Template runtime. This can be compiled with `#[no_std]`, ready for Wasm.
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -60,7 +68,8 @@ pub type Hash = primitives::H256;
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
 
-// Added by SCS. This is how they define the Currencies used
+// --- start added by SCS -----------------------------------------------------
+// This is how they define the Currencies used
 // by the contract module used in the substrate node
 pub mod currency {
 	use super::Balance;
@@ -73,6 +82,7 @@ pub mod currency {
 use currency::{MILLICENTS, CENTS, DOLLARS};
 
 mod kitty;
+// --- end added by SCS -------------------------------------------------------
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -100,8 +110,10 @@ pub mod opaque {
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
+	// --- start changed by SCS -----------------------------------------------
 	spec_name: create_runtime_str!("node"),
 	impl_name: create_runtime_str!("test-node"),
+	// --- end changed by SCS -------------------------------------------------
 	authoring_version: 1,
 	spec_version: 1,
 	impl_version: 1,
@@ -187,7 +199,8 @@ impl indices::Trait for Runtime {
 	type Event = Event;
 }
 
-// Added by SCS. In case the contract module is changed. One can look up
+// --- start changed by SCS -----------------------------------------------
+// In case the contract module changed, one can look up
 // the necessary changes in the substrate node.
 parameter_types! {
 	pub const ContractTransferFee: Balance = 1 * CENTS;
@@ -201,7 +214,7 @@ parameter_types! {
 	pub const SurchargeReward: Balance = 150 * DOLLARS;
 }
 
-// Added by SCS. In case the contract module is changed. One can look up
+// In case the contract module changed, one can look up
 // the necessary changes in the substrate node.
 impl contracts::Trait for Runtime {
 	type Currency = Balances;
@@ -231,6 +244,7 @@ impl contracts::Trait for Runtime {
 	type MaxValueSize = contracts::DefaultMaxValueSize;
 	type BlockGasLimit = contracts::DefaultBlockGasLimit;
 }
+// --- end changed by SCS -------------------------------------------------
 
 parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
@@ -253,7 +267,9 @@ impl balances::Trait for Runtime {
 	/// The type for recording an account's balance.
 	type Balance = Balance;
 	/// What to do if an account's free balance gets zeroed.
-	type OnFreeBalanceZero = (Contract);  // Contract argument added by SCS
+	// --- start changed by SCS -----------------------------------------------
+	type OnFreeBalanceZero = Contract;  // Contract argument added by SCS
+	// --- end changed by SCS -------------------------------------------------
 	/// What to do if a new account is created.
 	type OnNewAccount = Indices;
 	/// The ubiquitous event type.
@@ -284,10 +300,12 @@ impl sudo::Trait for Runtime {
 	type Proposal = Call;
 }
 
+// --- start changed by SCS -----------------------------------------------
 /// Used for the module template in `./kitty.rs`
 impl kitty::Trait for Runtime {
 	type Event = Event;
 }
+// --- end changed by SCS -------------------------------------------------
 
 construct_runtime!(
 	pub enum Runtime where
@@ -304,7 +322,9 @@ construct_runtime!(
 		TransactionPayment: transaction_payment::{Module, Storage},
 		Sudo: sudo,
 		Contract: contracts,
+		// --- start added by SCS ---------------------------------------------
 		KittyModule: kitty::{Module, Call, Storage, Event<T>},
+		// --- start added by SCS ---------------------------------------------
 		RandomnessCollectiveFlip: randomness_collective_flip::{Module, Call, Storage},
 	}
 );
