@@ -10,6 +10,9 @@ authors = ["Supercomputing Systems AG <info@scs.ch>"]
 build = "build.rs"
 edition = "2018"
 
+[workspace]
+members = ["runtime"]
+
 [[bin]]
 name = "substrate-test-node"
 path = "src/main.rs"
