@@ -1,3 +1,4 @@
+// No changes by SCS here.
 //! Substrate Node Template CLI library.
 
 #![warn(missing_docs)]
@@ -10,7 +11,7 @@ mod cli;
 
 pub use substrate_cli::{VersionInfo, IntoExit, error};
 
-fn main() {
+fn main() -> Result<(), cli::error::Error> {
 	let version = VersionInfo {
 		name: "Substrate Node",
 		commit: env!("VERGEN_SHA_SHORT"),
@@ -21,8 +22,5 @@ fn main() {
 		support_url: "support.anonymous.an",
 	};
 
-	if let Err(e) = cli::run(::std::env::args(), cli::Exit, version) {
-		eprintln!("Fatal error: {}\n\n{:?}", e, e);
-		std::process::exit(1)
-	}
+	cli::run(std::env::args(), cli::Exit, version)
 }
