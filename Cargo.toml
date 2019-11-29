@@ -1,9 +1,17 @@
+# Changes by SCS:
+# - renamed 'node-template' to 'substrate-test-node'
+# - renamed 'runtime' to 'test-node-runtime'
+# - add 'contracts'
+
 [package]
 name = "substrate-test-node"
 version = "2.0.0"
 authors = ["Supercomputing Systems AG <info@scs.ch>"]
 build = "build.rs"
 edition = "2018"
+
+[workspace]
+members = ["runtime"]
 
 [[bin]]
 name = "substrate-test-node"
@@ -22,77 +30,87 @@ trie-root = "0.15.2"
 
 [dependencies.sr-io]
 git = "https://github.com/paritytech/substrate"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.substrate-cli]
 git = "https://github.com/paritytech/substrate"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.primitives]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-primitives"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.substrate-executor]
 git = "https://github.com/paritytech/substrate"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.substrate-service]
 git = "https://github.com/paritytech/substrate"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.inherents]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-inherents"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.transaction-pool]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-transaction-pool"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.network]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-network"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
-[dependencies.babe]
+[dependencies.aura]
 git = "https://github.com/paritytech/substrate"
-package = "substrate-consensus-babe"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+package = "substrate-consensus-aura"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
-[dependencies.babe-primitives]
+[dependencies.aura-primitives]
 git = "https://github.com/paritytech/substrate"
-package = "substrate-consensus-babe-primitives"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+package = "substrate-consensus-aura-primitives"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.grandpa]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-finality-grandpa"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.grandpa-primitives]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-finality-grandpa-primitives"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.substrate-client]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-client"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
+
+[dependencies.sr-primitives]
+git = "https://github.com/paritytech/substrate"
+package = "sr-primitives"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.basic-authorship]
 git = "https://github.com/paritytech/substrate"
 package = "substrate-basic-authorship"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.contracts]
 git = "https://github.com/paritytech/substrate"
-package = "srml-contracts"
-rev = "f17d023bbe179f15678ac9989f471c9b18917e17"
+package = "pallet-contracts"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"
 
 [dependencies.test-node-runtime]
 path = "runtime"
 
 [build-dependencies]
 vergen = "3.0.4"
+
+[build-dependencies.build-script-utils]
+git = "https://github.com/paritytech/substrate"
+package = "substrate-build-script-utils"
+rev = "3bf9540e72df5ecb3955845764dfee7dcdbb26b5"

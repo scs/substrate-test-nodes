@@ -1,4 +1,3 @@
-use codec::{Decode, Encode};
 /// A runtime module template with necessary imports
 
 /// Feel free to remove or edit this file as needed.
@@ -9,8 +8,9 @@ use codec::{Decode, Encode};
 /// For more guidance on Substrate modules, see the example module
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
 
-use support::{decl_event, decl_module, decl_storage, dispatch::Result, ensure, StorageValue};
+use support::{decl_event, decl_module, decl_storage, dispatch::Result, ensure, StorageValue, traits::Randomness};
 use system::ensure_signed;
+use codec::{Decode, Encode};
 
 #[derive(Encode, Decode, Default, Clone, PartialEq)]
 #[cfg_attr(feature = "std", derive(Debug))]
@@ -88,8 +88,7 @@ impl<T: Trait> Module<T> {
         let new_kitty_count = kitty_count.checked_add(1).
             ok_or("[KittyModule]: Overflow adding new kitty")?;
 
-        let random_seed = <system::Module<T>>::random_seed();
-
+		let random_seed = <randomness_collective_flip::Module<T>>::random_seed();
         let new_kitty = Kitty {
             id: random_seed,
             price,
@@ -115,14 +114,13 @@ impl<T: Trait> Module<T> {
 /// tests for this module
 #[cfg(test)]
 mod tests {
-	use super::*;
+	use primitives::H256;
+	use sr_primitives::{
+		Perbill, testing::Header, traits::{BlakeTwo256, IdentityLookup}, weights::Weight,
+	};
+	use support::{assert_ok, impl_outer_origin, parameter_types};
 
-	use runtime_io::with_externalities;
-	use primitives::{H256, Blake2Hasher};
-	use support::{impl_outer_origin, assert_ok, parameter_types};
-	use sr_primitives::{traits::{BlakeTwo256, IdentityLookup}, testing::Header};
-	use sr_primitives::weights::Weight;
-	use sr_primitives::Perbill;
+	use super::*;
 
 	impl_outer_origin! {
 		pub enum Origin for Test {}
@@ -149,7 +147,6 @@ mod tests {
 		type AccountId = u64;
 		type Lookup = IdentityLookup<Self::AccountId>;
 		type Header = Header;
-		type WeightMultiplierUpdate = ();
 		type Event = ();
 		type BlockHashCount = BlockHashCount;
 		type MaximumBlockWeight = MaximumBlockWeight;
@@ -164,13 +161,13 @@ mod tests {
 
 	// This function basically just builds a genesis storage key/value store according to
 	// our desired mockup.
-	fn new_test_ext() -> runtime_io::TestExternalities<Blake2Hasher> {
+	fn new_test_ext() -> runtime_io::TestExternalities {
 		system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 	}
 
 	#[test]
 	fn it_works_for_default_value() {
-		with_externalities(&mut new_test_ext(), || {
+		new_test_ext().execute_with(|| {
 			// Just a dummy test for the dummy funtion `do_something`
 			// calling the `do_something` function with a value 42
 			assert_ok!(TemplateModule::do_something(Origin::signed(1), 42));

@@ -12,9 +12,8 @@ chmod +x ./rustup.sh
 # Load new environment
 source $HOME/.cargo/env
 
-# Install nightly. The specific version is required because of a bug in the later nightlies
-# "thread 'rustc' panicked at 'Tried to access field 0 of union with 0 fields'"
-rustup default nightly-2019-10-04
+# Install specific nightly version
+rustup default nightly-2019-11-17
 
 # Install aux components, clippy for linter, rustfmt for formatting
 rustup component add clippy
