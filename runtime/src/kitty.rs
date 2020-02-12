@@ -8,7 +8,7 @@ use codec::{Decode, Encode};
 /// For more guidance on Substrate modules, see the example module
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
 use frame_support::{
-    decl_event, decl_module, decl_storage, dispatch, ensure, traits::Randomness, StorageMap, StorageValue
+    decl_event, decl_module, decl_storage, dispatch, ensure, traits::Randomness
 };
 use system::ensure_signed;
 
