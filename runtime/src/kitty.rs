@@ -43,7 +43,7 @@ decl_module! {
         fn create_kitty(origin, price: T::Balance) -> dispatch::DispatchResult {
             let sender = ensure_signed(origin)?;
 
-            if !<KittyIndex<T>>::exists(&sender) {
+            if !<KittyIndex<T>>::contains_key(&sender) {
                 Self::_create_kitty(&sender, price)?;
 
                 // let the sender know where his kitty is stored
@@ -61,7 +61,7 @@ decl_module! {
 
         fn update_kitty(origin, price: T::Balance) {
             let sender = ensure_signed(origin)?;
-            ensure!(<KittyIndex<T>>::exists(&sender), "Cannot update nonexistent Kitty");
+            ensure!(<KittyIndex<T>>::contains_key(&sender), "Cannot update nonexistent Kitty");
             Self::_update_kitty(&sender, price)?;
 
             // let the sender know where his kitty is stored
@@ -83,7 +83,7 @@ decl_event!(
 
 impl<T: Trait> Module<T> {
     fn _create_kitty(sender: &T::AccountId, price: T::Balance) -> dispatch::DispatchResult {
-        if <KittyIndex<T>>::exists(sender) {
+        if <KittyIndex<T>>::contains_key(sender) {
             return Self::_update_kitty(sender, price);
         }
 
