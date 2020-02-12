@@ -154,6 +154,16 @@ fn testnet_genesis(initial_authorities: Vec<(AuraId, GrandpaId)>,
 		balances: Some(BalancesConfig {
 			balances: endowed_accounts.iter().cloned().map(|k|(k, 1 << 60)).collect(),
 		}),
+		// --- start added by SCS ---------------------------------------------
+		// Look up in the substrate node on how to initialize this.
+		contracts: Some(ContractConfig {
+			current_schedule: contracts::Schedule {
+				enable_println: true, // this should only be enabled on development chains
+				..Default::default()
+			},
+			gas_price: 1 * MILLICENTS,
+		}),
+		// --- end added by SCS -----------------------------------------------
 		sudo: Some(SudoConfig {
 			key: root_key,
 		}),
