@@ -7,9 +7,8 @@ use codec::{Decode, Encode};
 
 /// For more guidance on Substrate modules, see the example module
 /// https://github.com/paritytech/substrate/blob/master/srml/example/src/lib.rs
-use support::{
-    decl_event, decl_module, decl_storage, dispatch::Result, ensure, traits::Randomness,
-    StorageValue,
+use frame_support::{
+    decl_event, decl_module, decl_storage, dispatch, ensure, traits::Randomness, StorageMap, StorageValue
 };
 use system::ensure_signed;
 
@@ -30,9 +29,9 @@ pub trait Trait: balances::Trait {
 decl_storage! {
     trait Store for Module<T: Trait> as Kitty
     {
-        pub Kitties get(kitty): map u64 => Kitty<T::Hash, T::Balance>;
+        pub Kitties get(kitty): map hasher(blake2_256) u64 => Kitty<T::Hash, T::Balance>;
         pub KittyCount get(kitty_count): u64;
-        pub KittyIndex: map T::AccountId => u64;
+        pub KittyIndex: map hasher(blake2_256) T::AccountId => u64;
     }
 }
 
@@ -41,7 +40,7 @@ decl_module! {
     pub struct Module<T: Trait> for enum Call where origin: T::Origin {
         fn deposit_event() = default;
 
-        fn create_kitty(origin, price: T::Balance) -> Result {
+        fn create_kitty(origin, price: T::Balance) -> dispatch::DispatchResult {
             let sender = ensure_signed(origin)?;
 
             if !<KittyIndex<T>>::exists(&sender) {
@@ -83,7 +82,7 @@ decl_event!(
 );
 
 impl<T: Trait> Module<T> {
-    fn _create_kitty(sender: &T::AccountId, price: T::Balance) -> Result {
+    fn _create_kitty(sender: &T::AccountId, price: T::Balance) -> dispatch::DispatchResult {
         if <KittyIndex<T>>::exists(sender) {
             return Self::_update_kitty(sender, price);
         }
@@ -106,7 +105,7 @@ impl<T: Trait> Module<T> {
         Ok(())
     }
 
-    fn _update_kitty(sender: &T::AccountId, price: T::Balance) -> Result {
+    fn _update_kitty(sender: &T::AccountId, price: T::Balance) -> dispatch::DispatchResult {
         let key = <KittyIndex<T>>::get(sender);
         let mut kitty = <Kitties<T>>::get(key);
         kitty.price = price;
