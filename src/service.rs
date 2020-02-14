@@ -3,21 +3,17 @@
 
 //! Service and ServiceFactory implementation. Specialized wrapper over substrate service.
 
-use aura_primitives::sr25519::AuthorityPair as AuraPair;
-use basic_authorship;
 use grandpa::{self, FinalityProofProvider as GrandpaFinalityProofProvider};
-use inherents::InherentDataProviders;
-use network::construct_simple_protocol;
+use sc_client::LongestChain;
+use sc_executor::native_executor_instance;
+pub use sc_executor::NativeExecutor;
+use sc_network::construct_simple_protocol;
+use sc_service::{error::Error as ServiceError, AbstractService, Configuration, ServiceBuilder};
+use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use sp_inherents::InherentDataProviders;
 use std::sync::Arc;
 use std::time::Duration;
-use substrate_client::LongestChain;
-use substrate_executor::native_executor_instance;
-pub use substrate_executor::NativeExecutor;
-use substrate_service::{
-    error::Error as ServiceError, AbstractService, Configuration, ServiceBuilder,
-};
 use test_node_runtime::{self, opaque::Block, GenesisConfig, RuntimeApi};
-use transaction_pool::{self, txpool::Pool as TransactionPool};
 
 // Our native executor instance.
 native_executor_instance!(
@@ -38,26 +34,23 @@ construct_simple_protocol! {
 macro_rules! new_full_start {
     ($config:expr) => {{
         let mut import_setup = None;
-        let inherent_data_providers = inherents::InherentDataProviders::new();
+        let inherent_data_providers = sp_inherents::InherentDataProviders::new();
 
-        let builder = substrate_service::ServiceBuilder::new_full::<
+        let builder = sc_service::ServiceBuilder::new_full::<
             test_node_runtime::opaque::Block,
             test_node_runtime::RuntimeApi,
             crate::service::Executor,
         >($config)?
-        .with_select_chain(|_config, backend| {
-            Ok(substrate_client::LongestChain::new(backend.clone()))
-        })?
-        .with_transaction_pool(|config, client| {
-            Ok(transaction_pool::txpool::Pool::new(
-                config,
-                transaction_pool::FullChainApi::new(client),
-            ))
+        .with_select_chain(|_config, backend| Ok(sc_client::LongestChain::new(backend.clone())))?
+        .with_transaction_pool(|config, client, _fetcher| {
+            let pool_api = sc_transaction_pool::FullChainApi::new(client.clone());
+            let pool = sc_transaction_pool::BasicPool::new(config, std::sync::Arc::new(pool_api));
+            Ok(pool)
         })?
         .with_import_queue(|_config, client, mut select_chain, transaction_pool| {
             let select_chain = select_chain
                 .take()
-                .ok_or_else(|| substrate_service::Error::SelectChainRequired)?;
+                .ok_or_else(|| sc_service::Error::SelectChainRequired)?;
 
             let (grandpa_block_import, grandpa_link) =
                 grandpa::block_import::<_, _, _, test_node_runtime::RuntimeApi, _>(
@@ -66,9 +59,14 @@ macro_rules! new_full_start {
                     select_chain,
                 )?;
 
-            let import_queue = aura::import_queue::<_, _, AuraPair, _>(
-                aura::SlotDuration::get_or_compute(&*client)?,
-                Box::new(grandpa_block_import.clone()),
+            let aura_block_import = sc_consensus_aura::AuraBlockImport::<_, _, _, AuraPair>::new(
+                grandpa_block_import.clone(),
+                client.clone(),
+            );
+
+            let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, _>(
+                sc_consensus_aura::SlotDuration::get_or_compute(&*client)?,
+                aura_block_import,
                 Some(Box::new(grandpa_block_import.clone())),
                 None,
                 client,
@@ -86,8 +84,8 @@ macro_rules! new_full_start {
 }
 
 /// Builds a new service for a full client.
-pub fn new_full<C: Send + Default + 'static>(
-    config: Configuration<C, GenesisConfig>,
+pub fn new_full(
+    config: Configuration<GenesisConfig>,
 ) -> Result<impl AbstractService, ServiceError> {
     let is_authority = config.roles.is_authority();
     let force_authoring = config.force_authoring;
@@ -113,7 +111,7 @@ pub fn new_full<C: Send + Default + 'static>(
         .build()?;
 
     if participates_in_consensus {
-        let proposer = basic_authorship::ProposerFactory {
+        let proposer = sc_basic_authorship::ProposerFactory {
             client: service.client(),
             transaction_pool: service.transaction_pool(),
         };
@@ -123,8 +121,11 @@ pub fn new_full<C: Send + Default + 'static>(
             .select_chain()
             .ok_or(ServiceError::SelectChainRequired)?;
 
-        let aura = aura::start_aura::<_, _, _, _, _, AuraPair, _, _, _>(
-            aura::SlotDuration::get_or_compute(&*client)?,
+        let can_author_with =
+            sp_consensus::CanAuthorWithNativeVersion::new(client.executor().clone());
+
+        let aura = sc_consensus_aura::start_aura::<_, _, _, _, _, AuraPair, _, _, _>(
+            sc_consensus_aura::SlotDuration::get_or_compute(&*client)?,
             client,
             select_chain,
             block_import,
@@ -133,11 +134,12 @@ pub fn new_full<C: Send + Default + 'static>(
             inherent_data_providers.clone(),
             force_authoring,
             service.keystore(),
+            can_author_with,
         )?;
 
         // the AURA authoring task is considered essential, i.e. if it
         // fails we take down the service with it.
-        service.spawn_essential_task(aura);
+        service.spawn_essential_task("aura", aura);
     }
 
     // if the node isn't actively participating in consensus then it doesn't
@@ -161,12 +163,16 @@ pub fn new_full<C: Send + Default + 'static>(
     match (is_authority, disable_grandpa) {
         (false, false) => {
             // start the lightweight GRANDPA observer
-            service.spawn_task(grandpa::run_grandpa_observer(
-                grandpa_config,
-                grandpa_link,
-                service.network(),
-                service.on_exit(),
-            )?);
+            service.spawn_task(
+                "grandpa-observer",
+                grandpa::run_grandpa_observer(
+                    grandpa_config,
+                    grandpa_link,
+                    service.network(),
+                    service.on_exit(),
+                    service.spawn_task_handle(),
+                )?,
+            );
         }
         (true, false) => {
             // start the full GRANDPA voter
@@ -178,11 +184,12 @@ pub fn new_full<C: Send + Default + 'static>(
                 on_exit: service.on_exit(),
                 telemetry_on_connect: Some(service.telemetry_on_connect_stream()),
                 voting_rule: grandpa::VotingRulesBuilder::default().build(),
+                executor: service.spawn_task_handle(),
             };
 
             // the GRANDPA voter task is considered infallible, i.e.
             // if it fails we take down the service with it.
-            service.spawn_essential_task(grandpa::run_grandpa_voter(voter_config)?);
+            service.spawn_essential_task("grandpa", grandpa::run_grandpa_voter(voter_config)?);
         }
         (_, true) => {
             grandpa::setup_disabled_grandpa(
@@ -197,18 +204,24 @@ pub fn new_full<C: Send + Default + 'static>(
 }
 
 /// Builds a new service for a light client.
-pub fn new_light<C: Send + Default + 'static>(
-    config: Configuration<C, GenesisConfig>,
+pub fn new_light(
+    config: Configuration<GenesisConfig>,
 ) -> Result<impl AbstractService, ServiceError> {
     let inherent_data_providers = InherentDataProviders::new();
 
     ServiceBuilder::new_light::<Block, RuntimeApi, Executor>(config)?
         .with_select_chain(|_config, backend| Ok(LongestChain::new(backend.clone())))?
-        .with_transaction_pool(|config, client| {
-            Ok(TransactionPool::new(
+        .with_transaction_pool(|config, client, fetcher| {
+            let fetcher = fetcher
+                .ok_or_else(|| "Trying to start light transaction pool without active fetcher")?;
+
+            let pool_api = sc_transaction_pool::LightChainApi::new(client.clone(), fetcher.clone());
+            let pool = sc_transaction_pool::BasicPool::with_revalidation_type(
                 config,
-                transaction_pool::FullChainApi::new(client),
-            ))
+                Arc::new(pool_api),
+                sc_transaction_pool::RevalidationType::Light,
+            );
+            Ok(pool)
         })?
         .with_import_queue_and_fprb(
             |_config, client, backend, fetcher, _select_chain, _tx_pool| {
@@ -227,9 +240,9 @@ pub fn new_light<C: Send + Default + 'static>(
                 let finality_proof_request_builder =
                     finality_proof_import.create_finality_proof_request_builder();
 
-                let import_queue = aura::import_queue::<_, _, AuraPair, ()>(
-                    aura::SlotDuration::get_or_compute(&*client)?,
-                    Box::new(grandpa_block_import),
+                let import_queue = sc_consensus_aura::import_queue::<_, _, _, AuraPair, ()>(
+                    sc_consensus_aura::SlotDuration::get_or_compute(&*client)?,
+                    grandpa_block_import,
                     None,
                     Some(Box::new(finality_proof_import)),
                     client,

@@ -4,9 +4,7 @@
 // - use 'contracts'
 // - add 'contracts' to 'GenesisConfig'
 
-use aura_primitives::sr25519::AuthorityId as AuraId;
-use grandpa_primitives::AuthorityId as GrandpaId;
-use primitives::{sr25519, Pair, Public};
+use sp_core::{sr25519, Pair, Public};
 use test_node_runtime::{
     currency::*,
     AccountId,
@@ -17,8 +15,8 @@ use test_node_runtime::{
     GenesisConfig,
     GrandpaConfig,
     IndicesConfig,
-    // --- end added by SCS ---------------------------------------------------
     Signature,
+    // --- end added by SCS ---------------------------------------------------
     SudoConfig,
     SystemConfig,
     WASM_BINARY,
@@ -26,14 +24,16 @@ use test_node_runtime::{
 // --- start added by SCS -----------------------------------------------------
 use contracts;
 // --- end added by SCS -------------------------------------------------------
-use sr_primitives::traits::{IdentifyAccount, Verify};
-use substrate_service;
+use grandpa_primitives::AuthorityId as GrandpaId;
+use sc_service;
+use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_runtime::traits::{IdentifyAccount, Verify};
 
 // Note this is the URL for the telemetry server
 //const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
 
 /// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
-pub type ChainSpec = substrate_service::ChainSpec<GenesisConfig>;
+pub type ChainSpec = sc_service::ChainSpec<GenesisConfig>;
 
 /// The chain specification option. This is expected to come in from the CLI and
 /// is little more than one of a number of alternatives which can easily be converted
@@ -159,7 +159,6 @@ fn testnet_genesis(
                 .cloned()
                 .map(|k| (k, 1 << 60))
                 .collect(),
-            vesting: vec![],
         }),
         // --- start added by SCS ---------------------------------------------
         // Look up in the substrate node on how to initialize this.
@@ -182,4 +181,11 @@ fn testnet_genesis(
                 .collect(),
         }),
     }
+}
+
+pub fn load_spec(id: &str) -> Result<Option<ChainSpec>, String> {
+    Ok(match Alternative::from(id) {
+        Some(spec) => Some(spec.load()?),
+        None => None,
+    })
 }

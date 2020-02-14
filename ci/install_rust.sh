@@ -13,7 +13,7 @@ chmod +x ./rustup.sh
 source $HOME/.cargo/env
 
 # Install specific nightly version
-rustup default nightly-2019-11-17
+rustup default nightly-2020-02-06
 
 # Install aux components, clippy for linter, rustfmt for formatting
 rustup component add clippy
@@ -28,6 +28,5 @@ if ! [ -x "$(command -v wasm-gc)" ]; then
 else
     echo "wasm-gc already installed"
 fi
-
 # Show the installed versions
 rustup show
