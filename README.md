@@ -1,3 +1,6 @@
+# DEPRECATED
+This repository is no longer supported. Please consider using [substrate-node-template](https://github.com/scs/substrate-node-template) instead with is based on substrate v2.0
+
 # Substrate Test Node
 
 A substrate test node that is used for testing the [substrate-api-client](https://github.com/scs/substrate-api-client).
